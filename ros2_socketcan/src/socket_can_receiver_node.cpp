@@ -39,6 +39,9 @@ SocketCanReceiverNode::SocketCanReceiverNode(rclcpp::NodeOptions options)
   use_bus_time_ = this->declare_parameter<bool>("use_bus_time", false);
   enable_fd_ = this->declare_parameter<bool>("enable_can_fd", false);
   enable_loopback_ = this->declare_parameter<bool>("enable_frame_loopback", false);
+  ignore_incoming_ids_ = this->declare_parameter<bool>("ignore_incoming_ids", false);
+  ignored_incoming_ids_ =
+    this->declare_parameter<std::vector<int64_t>>("ignored_incoming_ids", std::vector<int64_t>{});
   double interval_sec = this->declare_parameter("interval_sec", 0.01);
   this->declare_parameter("filters", "0:0");
   interval_ns_ = std::chrono::duration_cast<std::chrono::nanoseconds>(
@@ -152,6 +155,19 @@ void SocketCanReceiverNode::receive()
 
       try {
         receive_id = receiver_->receive(frame_msg.data.data(), interval_ns_);
+
+        bool should_ignore = false;
+        if (ignore_incoming_ids_ && !ignored_incoming_ids_.empty()) {
+          for (size_t i = 0; i < ignored_incoming_ids_.size(); ++i) {
+            if (receive_id.get() == static_cast<uint32_t>(ignored_incoming_ids_[i])) {
+              should_ignore = true;
+              break;
+            }
+          }
+          if (should_ignore) {
+            continue;
+          }
+        }
       } catch (const std::exception & ex) {
         RCLCPP_WARN_THROTTLE(
           this->get_logger(), *this->get_clock(), 1000,

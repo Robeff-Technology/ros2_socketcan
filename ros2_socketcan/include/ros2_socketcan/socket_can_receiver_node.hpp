@@ -79,9 +79,11 @@ private:
   std::unique_ptr<SocketCanReceiver> receiver_;
   std::unique_ptr<std::thread> receiver_thread_;
   std::chrono::nanoseconds interval_ns_;
+  std::vector<int64_t> ignored_incoming_ids_;
   bool enable_fd_;
   bool use_bus_time_;
   bool enable_loopback_;
+  bool ignore_incoming_ids_;
 };
 }  // namespace socketcan
 }  // namespace drivers
