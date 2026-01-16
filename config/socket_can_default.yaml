@@ -1,0 +1,36 @@
+/**:
+  ros__parameters:
+    # CAN interface name (e.g., 'can0', 'can1', 'vcan0' for virtual CAN)
+    interface: "can0"
+
+    # Enable CAN FD (CAN Flexible Data-rate)
+    enable_can_fd: false
+
+    # Enable frame loopback
+    enable_frame_loopback: false
+
+    # Receiver interval in seconds
+    interval_sec: 0.01
+
+    # Sender timeout in seconds
+    timeout_sec: 0.01
+
+    # Use bus time instead of system time for timestamps
+    use_bus_time: false
+
+    # CAN filters (format: <can_id>:<can_mask>)
+    # Default '0:0' accepts all data frames
+    # For more info: https://manpages.ubuntu.com/manpages/jammy/man1/candump.1.html
+    filters: "0:0"
+
+    # Enable filtering of incoming CAN IDs
+    ignore_incoming_ids: false
+
+    # List of CAN IDs to ignore (in decimal or hex format)
+    # Example: [2641416193, 2641416192] or [0x9DEFB001, 0x9DEFB000]
+    # Leave empty to accept all IDs
+    ignored_incoming_ids: []
+
+    # Topic names
+    from_can_bus_topic: "from_can_bus"
+    to_can_bus_topic: "to_can_bus"

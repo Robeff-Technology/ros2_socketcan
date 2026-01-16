@@ -39,9 +39,18 @@ SocketCanReceiverNode::SocketCanReceiverNode(rclcpp::NodeOptions options)
   use_bus_time_ = this->declare_parameter<bool>("use_bus_time", false);
   enable_fd_ = this->declare_parameter<bool>("enable_can_fd", false);
   enable_loopback_ = this->declare_parameter<bool>("enable_frame_loopback", false);
+  
+  // Parameter to enable/disable incoming ID filtering
   ignore_incoming_ids_ = this->declare_parameter<bool>("ignore_incoming_ids", false);
-  ignored_incoming_ids_ =
-    this->declare_parameter<std::vector<int64_t>>("ignored_incoming_ids", std::vector<int64_t>{});
+  
+  // List of CAN IDs to ignore when filtering is enabled
+  try {
+    ignored_incoming_ids_ =
+      this->declare_parameter<std::vector<int64_t>>("ignored_incoming_ids", std::vector<int64_t>{});
+  } catch (const std::exception &) {
+    // Handle case where parameter is empty or invalid type
+    ignored_incoming_ids_ = std::vector<int64_t>{};
+  }
 
   double interval_sec = this->declare_parameter("interval_sec", 0.01);
   this->declare_parameter("filters", "0:0");
@@ -52,6 +61,13 @@ SocketCanReceiverNode::SocketCanReceiverNode(rclcpp::NodeOptions options)
   RCLCPP_INFO(this->get_logger(), "use bus time: %d", use_bus_time_);
   RCLCPP_INFO(this->get_logger(), "can fd enabled: %s", enable_fd_ ? "true" : "false");
   RCLCPP_INFO(this->get_logger(), "interval(s): %f", interval_sec);
+  
+  // Log filtering configuration
+  RCLCPP_INFO(this->get_logger(), "ignore_incoming_ids: %s", ignore_incoming_ids_ ? "true" : "false");
+  RCLCPP_INFO(this->get_logger(), "ignored_incoming_ids count: %zu", ignored_incoming_ids_.size());
+  for (size_t i = 0; i < ignored_incoming_ids_.size(); ++i) {
+    RCLCPP_INFO(this->get_logger(), "  Ignored ID [%zu]: 0x%lX", i, static_cast<uint32_t>(ignored_incoming_ids_[i]));
+  }
 }
 
 LNI::CallbackReturn SocketCanReceiverNode::on_configure(const lc::State & state)
@@ -154,14 +170,22 @@ void SocketCanReceiverNode::receive()
       try {
         receive_id = receiver_->receive(frame_msg.data.data(), interval_ns_);
 
+        // Filter incoming CAN IDs if filtering is enabled
         bool should_ignore = false;
         if (ignore_incoming_ids_ && !ignored_incoming_ids_.empty()) {
+          // Compare received ID against each ignored ID
           for (size_t i = 0; i < ignored_incoming_ids_.size(); ++i) {
+            RCLCPP_WARN(
+              this->get_logger(), "Received ID: %X, Comparing with: %lX",
+              receive_id.get(), static_cast<uint32_t>(ignored_incoming_ids_[i]));
             if (receive_id.get() == static_cast<uint32_t>(ignored_incoming_ids_[i])) {
+              RCLCPP_ERROR(
+                this->get_logger(), "MATCHED! IDS: %X, %lX", receive_id.get(), static_cast<uint32_t>(ignored_incoming_ids_[i]));
               should_ignore = true;
               break;
             }
           }
+          // Skip publishing if ID matches ignore list
           if (should_ignore) {
             continue;
           }
@@ -173,6 +197,9 @@ void SocketCanReceiverNode::receive()
           interface_.c_str(), ex.what());
         continue;
       }
+
+      RCLCPP_INFO(
+        this->get_logger(), "Publishing CAN ID: %X", receive_id.get());
 
       if (use_bus_time_) {
         frame_msg.header.stamp =
@@ -202,6 +229,24 @@ void SocketCanReceiverNode::receive()
 
       try {
         receive_id = receiver_->receive_fd(fd_frame_msg.data.data<void>(), interval_ns_);
+
+        bool should_ignore = false;
+        if (ignore_incoming_ids_ && !ignored_incoming_ids_.empty()) {
+          for (size_t i = 0; i < ignored_incoming_ids_.size(); ++i) {
+            RCLCPP_WARN(
+              this->get_logger(), "Received ID: %X, Comparing with: %lX",
+              receive_id.get(), static_cast<uint32_t>(ignored_incoming_ids_[i]));
+            if (receive_id.get() == static_cast<uint32_t>(ignored_incoming_ids_[i])) {
+              RCLCPP_ERROR(
+                this->get_logger(), "MATCHED! IDS: %X, %lX", receive_id.get(), static_cast<uint32_t>(ignored_incoming_ids_[i]));
+              should_ignore = true;
+              break;
+            }
+          }
+          if (should_ignore) {
+            continue;
+          }
+        }
       } catch (const std::exception & ex) {
         RCLCPP_WARN_THROTTLE(
           this->get_logger(), *this->get_clock(), 1000,

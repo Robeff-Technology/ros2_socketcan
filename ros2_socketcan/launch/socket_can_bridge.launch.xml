@@ -1,5 +1,8 @@
 <launch>
 
+  <!-- Configuration file path (optional) -->
+  <arg name="config_file" default="$(find-pkg-share ros2_socketcan)/config/socket_can_default.yaml" />
+
   <arg name="interface" default="can0" />
   <arg name="receiver_interval_sec" default="0.01" />
   <arg name="sender_timeout_sec" default="0.01" />
@@ -20,6 +23,8 @@
     <arg name="from_can_bus_topic" value="$(var from_can_bus_topic)" />
     <arg name="filters" value="$(var filters)" />
     <arg name="use_bus_time" value="$(var use_bus_time)" />
+    <arg name="ignore_incoming_ids" value="$(var ignore_incoming_ids)" />
+    <arg name="ignored_incoming_ids" value="$(var ignored_incoming_ids)" />
   </include>
 
   <include file="$(find-pkg-share ros2_socketcan)/launch/socket_can_sender.launch.py">

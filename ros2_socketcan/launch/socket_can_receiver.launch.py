@@ -29,6 +29,9 @@ from lifecycle_msgs.msg import Transition
 
 
 def generate_launch_description():
+    # Get the config file path from arguments or use default
+    config_file = LaunchConfiguration('config_file')
+
     socket_can_receiver_node = LifecycleNode(
         package='ros2_socketcan',
         executable='socket_can_receiver_node_exe',
@@ -41,6 +44,8 @@ def generate_launch_description():
             LaunchConfiguration('interval_sec'),
             'filters': LaunchConfiguration('filters'),
             'use_bus_time': LaunchConfiguration('use_bus_time'),
+            'ignore_incoming_ids': LaunchConfiguration('ignore_incoming_ids'),
+            'ignored_incoming_ids': LaunchConfiguration('ignored_incoming_ids'),
         }],
         remappings=[('from_can_bus', LaunchConfiguration('from_can_bus_topic')),
                     ('from_can_bus_fd', LaunchConfiguration('from_can_bus_topic'))],
@@ -79,6 +84,9 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
+        DeclareLaunchArgument('config_file',
+                              default_value='$(find-pkg-share ros2_socketcan)/config/socket_can_default.yaml',
+                              description='Path to the ROS 2 parameters file'),
         DeclareLaunchArgument('interface', default_value='can0'),
         DeclareLaunchArgument('enable_can_fd', default_value='false'),
         DeclareLaunchArgument('interval_sec', default_value='0.01'),
@@ -108,6 +116,9 @@ def generate_launch_description():
                                           'man1/candump.1.html'),
         DeclareLaunchArgument('auto_configure', default_value='true'),
         DeclareLaunchArgument('auto_activate', default_value='true'),
+        DeclareLaunchArgument('ignore_incoming_ids', default_value='false'),
+        DeclareLaunchArgument('ignored_incoming_ids', default_value='',
+                              description='List of CAN IDs to ignore (decimal or hex format)'),
         DeclareLaunchArgument('from_can_bus_topic', default_value='from_can_bus_fd',
                               condition=IfCondition(LaunchConfiguration('enable_can_fd'))),
         DeclareLaunchArgument('from_can_bus_topic', default_value='from_can_bus',

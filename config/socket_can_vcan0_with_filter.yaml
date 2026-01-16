@@ -1,0 +1,16 @@
+/**:
+  ros__parameters:
+    interface: "vcan0"
+    enable_can_fd: false
+    enable_frame_loopback: true
+    interval_sec: 0.01
+    timeout_sec: 0.01
+    use_bus_time: false
+    filters: "0:0"
+    
+    # Filter incoming CAN IDs
+    ignore_incoming_ids: true
+    ignored_incoming_ids: [0x9DEFB001, 0x9DEFB000]
+    
+    from_can_bus_topic: "from_can_bus"
+    to_can_bus_topic: "to_can_bus"

@@ -62,3 +62,8 @@ endif()
 ament_auto_package(INSTALL_TO_SHARE
   launch
 )
+
+# Install config directory from parent directory
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../config
+  DESTINATION share/${PROJECT_NAME}/
+)

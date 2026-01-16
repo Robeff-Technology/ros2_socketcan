@@ -1,0 +1,14 @@
+/**:
+  ros__parameters:
+    interface: "can0"
+    enable_can_fd: true
+    enable_frame_loopback: false
+    interval_sec: 0.01
+    timeout_sec: 0.01
+    use_bus_time: true
+    filters: "0:0"
+    ignore_incoming_ids: false
+    ignored_incoming_ids: []
+    
+    from_can_bus_topic: "from_can_bus_fd"
+    to_can_bus_topic: "to_can_bus_fd"

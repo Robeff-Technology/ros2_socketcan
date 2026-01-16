@@ -29,6 +29,9 @@ from lifecycle_msgs.msg import Transition
 
 
 def generate_launch_description():
+    # Get the config file path from arguments or use default
+    config_file = LaunchConfiguration('config_file')
+
     socket_can_sender_node = LifecycleNode(
         package='ros2_socketcan',
         executable='socket_can_sender_node_exe',
@@ -78,6 +81,9 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
+        DeclareLaunchArgument('config_file',
+                              default_value='$(find-pkg-share ros2_socketcan)/config/socket_can_default.yaml',
+                              description='Path to the ROS 2 parameters file'),
         DeclareLaunchArgument('interface', default_value='can0'),
         DeclareLaunchArgument('enable_can_fd', default_value='false'),
         DeclareLaunchArgument('enable_frame_loopback', default_value='false'),
